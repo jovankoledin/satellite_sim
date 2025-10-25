@@ -202,10 +202,6 @@
             const mod_scheme = document.getElementById('mod_scheme').value;
             const symbol_rate_msym = document.getElementById('symbol_rate').value;
 
-            //
-            // --- START OF CORRECTED PYTHON CODE ---
-            // All indentation is now using standard spaces.
-            //
             const pythonCode = `
 import numpy as np
 import matplotlib
@@ -345,10 +341,10 @@ def hamming_decode(encoded):
         s3 = r[3] ^ r[4] ^ r[5] ^ r[6]
         syndrome = s3*4 + s2*2 + s1
         if syndrome != 0:
-            pos = syndrome - 1
-            if 0 <= pos < 7:
-                r[pos] ^= 1
-                corrected_bits += 1 # This line is correct
+                pos = syndrome - 1
+                if 0 <= pos < 7:
+                    r[pos] ^= 1
+                    corrected_bits += 1 # This line is correct
         decoded[i*4:(i+1)*4] = r[[2,4,5,6]]
     return decoded, corrected_bits # MODIFIED
 
@@ -575,7 +571,7 @@ def mac_encapsulate(bits):
     data_with_header = np.hstack([header, bits])
     crc = zlib.crc32(data_with_header.tobytes())
     crc_bits = np.array([int(b) for b in bin(crc)[2:].zfill(32)], dtype=np.uint8)
-    return np.hstack([data_with_header, crc_bits])
+return np.hstack([data_with_header, crc_bits])
 def mac_decapsulate(bits_est):
     if len(bits_est) < 48:
         return None, "Packet too short"
@@ -714,7 +710,7 @@ def run_simulation(input_text, SNR_db, K_db_param, doppler_norm_param, K_subcarr
 
     # FEC decode
     total_corrected = 0 # NEW: Initialize counters here
-    fec_failed = False     # NEW: Initialize flag here
+    fec_failed = False    # NEW: Initialize flag here
 
     if fec_type == "reed_solomon":
         est_bytes = bits_to_bytes(bits_coded_est)
@@ -811,129 +807,126 @@ def run_simulation(input_text, SNR_db, K_db_param, doppler_norm_param, K_subcarr
     buf_ch.seek(0)
     plot_ch_b64 = base64.b64encode(buf_ch.read()).decode('utf-8')
 
-    # --- VIZ 1 & 2 & 4: JSON Data Packet (NEW) ---
-    viz_data = {
-        'encoding': {
-            'original_bytes': len(bits)//8,
-            'encap_bytes': len(bits_encap)//8,
-            'coded_bytes': len(bits_coded)//8,
-            'fec_type': fec_type
-        },
-        'ofdm_grid': {
-            'num_symbols': num_symbols,
-            'data_carriers': len(dataCarriers),
-            'pilot_carriers': len(pilotCarriers),
-            'total_carriers': K,
-            'cp_len': CP
-        },
-        'decoding': {
-            'received_bytes': len(bits_coded_est)//8,
-            'corrected_symbols': total_corrected, # This is bits for Hamming, bytes for RS
-            'fec_failed': fec_failed,
-            'crc_error': bool(err_msg),
-            'fec_type': fec_type
-        }
+    # --- VIZ 4: FEC STATS (NEW) ---
+    fec_stats = {
+        "corrected": total_corrected,
+        "failed": fec_failed
     }
+    fec_stats_json = json.dumps(fec_stats)
 
-    # ... (Return unchanged) ...
     sys.stdout = sys.__stdout__
-    return captured.content, plot_b64, plot_ch_b64, rate_str, json.dumps(viz_data)
+    
+    # --- NEW RETURN STATEMENT ---
+    return ( captured.content, plot_b64, rate_str, plot_ch_b64, fec_stats_json, 
+             pilotCarriers.tolist(), dataCarriers.tolist(), mod_scheme )
 
-# --- Entry point ---
-try:
-    results = run_simulation(
-        "${message}", 
-        float(${snr}), 
-        float(${k_db}),
-        float(${doppler_norm}),
-        int(${k_subcarriers}),
-        "${fec_type}",
-        "${mod_scheme}",
-        float(${symbol_rate_msym})
-    )
-except Exception as e:
-    import traceback
-    results = (f"Python Error: {e}\\n{traceback.format_exc()}", "", "", "-", "{}")
-
-results
+# Run simulation with injected args (escape message safely)
+# Run simulation
+run_simulation(
+    f"""${message.replace(/\\\\/g, '\\\\\\\\').replace(/"/g, '\\\\"')}""",
+    float(${snr}), float(${k_db}), float(${doppler_norm}), int(${k_subcarriers}),
+    "${fec_type}", "${mod_scheme}", float(${symbol_rate_msym})
+)
 `;
-            //
-            // --- END OF CORRECTED PYTHON CODE ---
-            //
-            
-            try {
-                const [output, plot_b64, plot_ch_b64, rate_str, viz_json] = await py.runPythonAsync(pythonCode);
-                outputDiv.innerText = output;
-                document.getElementById('plot').src = 'data:image/png;base64,' + plot_b64;
-                document.getElementById('plot-channel').src = 'data:image/png;base64,' + plot_ch_b64;
-                document.getElementById('data-rate-output').innerText = `Effective Data Rate: ${rate_str}`;
                 
-                // --- VIZ SCRIPT (NEW) ---
-                const vizData = JSON.parse(viz_json);
+                try {
+                    // NEW: Get all 8 return values from Python
+                    const results = await py.runPythonAsync(pythonCode);
+                    const [
+                        outputText, 
+                        plotBase64, 
+                        rateStr, 
+                        plotChBase64, 
+                        fecStatsJson,
+                        pilotCarriers,
+                        dataCarriers,
+                        modScheme
+                    ] = results.toJs();
+                    const fecStats = JSON.parse(fecStatsJson);
+
+                    // Update the original outputs
+                    outputDiv.innerText = outputText;
+                    document.getElementById('data-rate-output').innerText = `Effective Data Rate: ${rateStr}`;
+                    document.getElementById('plot').src = `data:image/png;base64,${plotBase64}`;
                 
-                // 1. Encoding Viz
-                const encViz = document.getElementById('viz-encoding');
-                const orig_w = 100 * vizData.encoding.original_bytes / vizData.encoding.coded_bytes;
-                const encap_w = 100 * (vizData.encoding.encap_bytes - vizData.encoding.original_bytes) / vizData.encoding.coded_bytes;
-                const fec_w = 100 * (vizData.encoding.coded_bytes - vizData.encoding.encap_bytes) / vizData.encoding.coded_bytes;
-                
-                encViz.innerHTML = `
-                    <div class="data-block" style="width: ${orig_w}%; background-color: #28a745;" title="Original Data">${vizData.encoding.original_bytes} B</div>
-                    <div class="data-block" style="width: ${encap_w}%; background-color: #ffc107;" title="MAC Header/CRC">${vizData.encoding.encap_bytes - vizData.encoding.original_bytes} B</div>
-                    <div class="data-block" style="width: ${fec_w}%; background-color: #dc3545;" title="FEC Parity">${vizData.encoding.coded_bytes - vizData.encoding.encap_bytes} B</div>
-                    <small>Total encoded size: ${vizData.encoding.coded_bytes} bytes</small>
-                `;
-
-                // 2. OFDM Grid Viz
-                const gridViz = document.getElementById('viz-ofdm-grid');
-                let gridHtml = '';
-                const num_cells = Math.min(vizData.ofdm_grid.total_carriers * 4, 1024); // Limit to 1024 cells
-                const num_cols = vizData.ofdm_grid.total_carriers;
-                const num_rows = Math.min(4, vizData.ofdm_grid.num_symbols);
-                
-                gridViz.style.gridTemplateColumns = \`repeat(\${num_cols}, 1fr)\`;
-
-                for(let r=0; r < num_rows; r++) {
-                    for(let c=0; c < num_cols; c++) {
-                        let cellClass = 'cell-data';
-                        let title = \`Symbol \${r+1}, Carrier \${c} (Data)\`;
-                        if (c % (num_cols / vizData.ofdm_grid.pilot_carriers) === 0 || c === num_cols - 1) { // Simple viz of pilots
-                             cellClass = 'cell-pilot';
-                             title = \`Symbol \${r+1}, Carrier \${c} (Pilot)\`;
-                        }
-                        gridHtml += \`<div class="grid-cell" title="\${title}"><div class="grid-cell-inner \${cellClass}"></div></div>\`;
-                    }
-                }
-                if(vizData.ofdm_grid.num_symbols > num_rows) {
-                     gridHtml += \`<div style="grid-column: 1 / -1; text-align: center; font-size: 0.8em; padding-top: 5px;">... and \${vizData.ofdm_grid.num_symbols - num_rows} more symbols</div>\`;
-                }
-                gridViz.innerHTML = gridHtml;
-
-
-                // 4. Decoding Viz
-                const decViz = document.getElementById('viz-decoding');
-                let decHtml = '';
-                if (vizData.decoding.fec_failed) {
-                    decHtml = '<span style="color: #dc3545; font-weight: bold;">DECODING FAILED</span>';
-                    if (vizData.decoding.crc_error) {
-                        decHtml += '<br><small>(CRC Mismatch)</small>';
+                    // --- VIZ 1: ENCODING (NEW) ---
+                    const encodingViz = document.getElementById('viz-encoding');
+                    const originalBytes = message.length;
+                    const macBytes = originalBytes + 6; // 16bit header + 32bit CRC = 48 bits = 6 bytes
+                    let fecBytes, fecLabel;
+                    if (fec_type === 'hamming') {
+                        fecBytes = Math.ceil((macBytes * 8) * (7 / 4) / 8);
+                        fecLabel = `Hamming (7,4) Encoded`;
                     } else {
-                        decHtml += '<br><small>(Uncorrectable FEC errors)</small>';
+                        const numBlocks = Math.ceil(macBytes / 223); // 223 = RS_K
+                        fecBytes = numBlocks * 255; // 255 = RS_N
+                        fecLabel = `Reed-Solomon (255,223) Encoded`;
                     }
-                } else {
-                    decHtml = '<span style="color: #28a745; font-weight: bold;">DECODING SUCCESSFUL</span>';
-                    let unit = vizData.decoding.fec_type === 'hamming' ? 'bits' : 'bytes';
-                    decHtml += \`<br><small>Corrected \${vizData.decoding.corrected_symbols} \${unit}.</small>\`;
-                }
-                decViz.innerHTML = decHtml;
+                    const total = fecBytes > 0 ? fecBytes : 1;
+                    const originalPct = (originalBytes / total * 100).toFixed(1);
+                    const macPct = (macBytes / total * 100).toFixed(1);
+                    const fecPct = (fecBytes / total * 100).toFixed(1);
+                    encodingViz.innerHTML = `
+                        <div class="data-block" style="width: ${originalPct}%; background-color: #28a745;">
+                            Msg (${originalBytes} B)
+                        </div>
+                        <div class="data-block" style="width: ${macPct}%; background-color: #17a2b8;">
+                            +MAC Header/CRC (${macBytes} B)
+                        </div>
+                        <div class="data-block" style="width: ${fecPct}%; background-color: #ffc107; color: #333;">
+                            ${fecLabel} (${fecBytes} B)
+                        </div>
+                        <p>Total bytes to transmit: <strong>${fecBytes}</strong></p>
+                    `;
 
-            } catch (e) {
-                console.error(e);
-                outputDiv.innerText = "An error occurred during the Python execution: \n" + e;
-                if(e.message.includes("U+00A0")) {
-                     outputDiv.innerText += "\n\nHint: This error is often caused by invalid 'non-breaking space' characters in the code. This happens when copying from a web page. Try replacing all indentation with standard spaces.";
+                    // --- VIZ 2: OFDM GRID (NEW) ---
+                    const gridViz = document.getElementById('viz-ofdm-grid');
+                    const k_total_subcarriers = pilotCarriers.length + dataCarriers.length;
+                    const gridCols = Math.ceil(Math.sqrt(k_total_subcarriers));
+                    gridViz.style.gridTemplateColumns = `repeat(${gridCols}, 1fr)`;
+                    gridViz.innerHTML = '';
+                    const pilotMap = new Set(pilotCarriers);
+                    const dataMap = new Set(dataCarriers);
+                    for (let i = 0; i < k_total_subcarriers; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        let innerHtml = '';
+                        if (pilotMap.has(i)) {
+                            innerHtml = `<div class="grid-cell-inner cell-pilot" title="Pilot Carrier ${i}">P</div>`;
+                        } else if (dataMap.has(i)) {
+                            innerHtml = `<div class="grid-cell-inner cell-data" title="Data Carrier ${i} (${modScheme})">${modScheme[0]}</div>`;
+                        }
+                        cell.innerHTML = innerHtml;
+                        gridViz.appendChild(cell);
+                    }
+
+                    // --- VIZ 3: CHANNEL PLOT (NEW) ---
+                    document.getElementById('plot-channel').src = `data:image/png;base64,${plotChBase64}`;
+
+                    // --- VIZ 4: DECODING (FEC) (NEW) ---
+                    const decodingViz = document.getElementById('viz-decoding');
+                    let fecUnit = (fec_type === 'hamming') ? 'bits' : 'bytes';
+                    let statusHtml = '';
+                    if (fecStats.failed) {
+                        statusHtml = `
+                            <h3>Status: <span style="color: #dc3545;">FEC FAILED</span></h3>
+                            <p>Too many errors from the channel (SNR too low or fading too deep).</p>
+                            <p>The ${fec_type} decoder was overwhelmed and could not recover the data.</p>
+                       `;
+                    } else {
+                        statusHtml = `
+                            <h3>Status: <span style="color: #28a745;">Success!</span></h3>
+                            <p>The <strong>${fec_type}</strong> decoder successfully corrected 
+                            <strong>${fecStats.corrected}</strong> ${fecUnit}!</p>
+                            <p>Original message was recovered.</p>
+                        `;
+                    }
+                    decodingViz.innerHTML = statusHtml;
+
+                } catch (error) {
+                    outputDiv.innerText = `An error occurred during the Python execution:\n${error.message}`;
+                    document.getElementById('data-rate-output').innerText = "Effective Data Rate: ERROR";
                 }
-            }
         }
     </script>
 </body>
