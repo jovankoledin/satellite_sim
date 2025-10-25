@@ -14,9 +14,15 @@
         button:hover { background-color: #0056b3; }
         #output { background-color: #e9ecef; padding: 15px; border-radius: 5px; white-space: pre-wrap; font-family: "Courier New", Courier, monospace; margin-top: 15px; min-height: 120px; }
         #plot { max-width: 100%; border: 1px solid #ddd; margin-top: 15px; border-radius: 5px; }
+        /* UPDATED: Grouped rule for both plots */
+        #plot, #plot-channel { 
+            max-width: 100%; 
+            border: 1px solid #ddd; 
+            margin-top: 15px; 
+            border-radius: 5px; 
+        }
         .input-group { display: flex; flex-wrap: wrap; justify-content: space-between; gap:10px; }
         .input-group > div { flex: 1 1 30%; min-width: 200px; }
-        /* MISSING 2: DATA RATE OUTPUT STYLING */
         #data-rate-output { 
             font-size: 1.2em; 
             font-weight: bold; 
