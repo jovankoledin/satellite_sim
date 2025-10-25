@@ -571,7 +571,7 @@ def mac_encapsulate(bits):
     data_with_header = np.hstack([header, bits])
     crc = zlib.crc32(data_with_header.tobytes())
     crc_bits = np.array([int(b) for b in bin(crc)[2:].zfill(32)], dtype=np.uint8)
-return np.hstack([data_with_header, crc_bits])
+    return np.hstack([data_with_header, crc_bits])
 def mac_decapsulate(bits_est):
     if len(bits_est) < 48:
         return None, "Packet too short"
