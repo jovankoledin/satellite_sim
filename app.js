@@ -49,6 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('viz-ofdm-grid').innerHTML = "";
         document.getElementById('viz-decoding').innerHTML = "";
 
+        // --- NEW: Hide plots at the start of every run ---
+        document.getElementById('plot').style.display = 'none'; 
+        document.getElementById('plot-channel').style.display = 'none';
+
         try {
             // Ensure Pyodide and the Python script are fully loaded
             const py = await pyodidePromise;
@@ -156,7 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // --- VIZ 3: CHANNEL PLOT ---
-            document.getElementById('plot-channel').src = `data:image/png;base64,${plotChBase64}`;
+            const plotChannel = document.getElementById('plot-channel');
+            plotChannel.src = `data:image/png;base64,${plotChBase64}`;
+            plotChannel.style.display = 'block'; // --- NEW: Make plot visible ---
 
             // --- VIZ 4: DECODING (FEC) ---
             const decodingViz = document.getElementById('viz-decoding');
@@ -177,6 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
             decodingViz.innerHTML = statusHtml;
+
+            // --- VIZ 4: CONST. PLOT ---
+            const plotConstellation = document.getElementById('plot');
+            plotConstellation.src = `data:image/png;base64,${plotBase64}`;
+            plotConstellation.style.display = 'block'; 
 
         } catch (error) {
             outputDiv.innerText = `An error occurred during the Python execution:\n${error.message}`;
