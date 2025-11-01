@@ -173,27 +173,64 @@ def forney(omega, locator, error_positions):
 
 def rs_correct_block(rx_block):
     if len(rx_block) != RS_N: raise ValueError("rs_correct_block expects length RS_N")
-    synd = rs_compute_syndromes(rx_block)
-    if not any(synd): return rx_block[:RS_K], 0 # MODIFIED (0 corrections)
+    
+    # --- FIX: CONVENTION MISMATCH ---
+    # The encoder (rs_encode_block) is MSB-first, but all decoder
+    # helper functions (syndromes, BM, chien, forney) are LSB-first.
+    # We must operate on a *reversed* (LSB-first) copy of the block.
+    rx_rev = list(reversed(rx_block))
+
+    # 1. Compute syndromes on the LSB-first block
+    synd = rs_compute_syndromes(rx_rev)
+    
+    # If no syndromes, block is clean. Return original MSB-first data.
+    if not any(synd): 
+        return rx_block[:RS_K], 0 # MODIFIED (0 corrections)
+    
+    # 2. Find error locator polynomial (LSB-first)
     locator = berlekamp_massey(synd)
-    if len(locator) - 1 > RS_T: return rx_block[:RS_K], -1 # MODIFIED (failure)
+    if len(locator) - 1 > RS_T: 
+        return rx_block[:RS_K], -1 # MODIFIED (failure)
+        
+    # 3. Find error positions (LSB-first indices)
     error_positions = chien_search(locator)
     if not error_positions or len(error_positions) != len(locator) - 1:
         return rx_block[:RS_K], -1 # MODIFIED (failure)
+
+    # 4. Find error evaluator polynomial (Omega)
+    # The original code's method for LSB-first poly_mul was convoluted but correct:
+    # omega_poly = list(reversed(poly_mul(list(reversed(locator)), list(reversed(synd)))))
+    # This is equivalent to poly_mul_LSB(locator, synd)
     S_poly = synd 
     omega_poly = poly_mul(list(reversed(locator)), list(reversed(S_poly)))
     omega_poly = list(reversed(omega_poly))
-    omega = ([0] * (2*RS_T))
-    for i in range(min(len(omega_poly), 2*RS_T)): omega[i] = omega_poly[i]
+    omega = ([0] * (2*RS_T)) # Truncate to 2T terms
+    for i in range(min(len(omega_poly), 2*RS_T)): 
+        omega[i] = omega_poly[i]
+
+    # 5. Find error magnitudes
     error_magnitudes = forney(omega, locator, error_positions)
-    if not error_magnitudes: return rx_block[:RS_K], -1 # MODIFIED (failure)
-    corrected = list(rx_block)
-    for i in range(len(error_positions)):
-        pos = error_positions[i]; val = error_magnitudes[i]
-        if pos < len(corrected): corrected[pos] ^= val
-    if any(rs_compute_syndromes(corrected)):
+    if not error_magnitudes: 
         return rx_block[:RS_K], -1 # MODIFIED (failure)
-    return corrected[:RS_K], len(error_positions) # MODIFIED (success)
+
+    # 6. Apply corrections to the LSB-FIRST block
+    corrected_rev = rx_rev.copy()
+    for i in range(len(error_positions)):
+        pos = error_positions[i] # This is an LSB-first index
+        val = error_magnitudes[i]
+        
+        if pos < len(corrected_rev): 
+            corrected_rev[pos] ^= val # Apply fix to LSB-first block
+        
+    # 7. Verify correction on the LSB-FIRST block
+    if any(rs_compute_syndromes(corrected_rev)):
+        return rx_block[:RS_K], -1 # MODIFIED (failure)
+        
+    # 8. --- FIX: --- Reverse the corrected block back to MSB-first
+    corrected_block = list(reversed(corrected_rev))
+    
+    # Return the data portion of the original (MSB-first) corrected block
+    return corrected_block[:RS_K], len(error_positions) # MODIFIED (success)
 
 # --- Helper: bytes/bits conversions ---
 # ... (bits_to_bytes and bytes_to_bits are unchanged) ...
