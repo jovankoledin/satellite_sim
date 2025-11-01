@@ -5,10 +5,11 @@ input, button, select { margin: 5px 0 10px 0; padding: 10px; border-radius: 5px;
 button { background-color: #007bff; color: white; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
 button:hover { background-color: #0056b3; }
 #output { background-color: #e9ecef; padding: 15px; border-radius: 5px; white-space: pre-wrap; font-family: "Courier New", Courier, monospace; margin-top: 15px; min-height: 120px; }
-#plot { max-width: 100%; border: 1px solid #ddd; margin-top: 15px; border-radius: 5px; }
-/* UPDATED: Grouped rule for both plots */
+/* CORRECTED & IMPROVED: Target img elements for the plots */
 #plot, #plot-channel { 
     max-width: 100%; 
+    height: auto; 
+    display: block; 
     border: 1px solid #ddd; 
     margin-top: 15px; 
     border-radius: 5px; 
@@ -117,6 +118,16 @@ button:hover { background-color: #0056b3; }
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
+/* Hide plots initially */
+#plot, #plot-channel { 
+    max-width: 100%; 
+    height: auto; 
+    display: none; /* Changed from 'block' to 'none' */
+    border: 1px solid #ddd; 
+    margin-top: 15px; 
+    border-radius: 5px; 
+}
+
 /* The tooltip arrow */
 .tooltip-label::before {
     content: '';
@@ -139,4 +150,173 @@ button:hover { background-color: #0056b3; }
 .tooltip-label:hover::before {
     visibility: visible;
     opacity: 1;
+}
+
+#spectrum-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+.sim-button {
+    padding: 10px 15px;
+    width: auto;
+    flex-grow: 0;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.sim-button#start-sim-button {
+    background-color: #28a745;
+}
+.sim-button#start-sim-button:hover {
+    background-color: #218838;
+}
+
+.sim-button#stop-sim-button {
+    background-color: #dc3545;
+}
+.sim-button#stop-sim-button:hover {
+    background-color: #c82333;
+}
+
+.sim-button:not(.active) {
+    background-color: #6c757d;
+    opacity: 0.7;
+}
+
+/* MODIFIED: Adjusted spectrum-info styles */
+#spectrum-info {
+    display: flex;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
+    gap: 15px;
+    font-size: 0.9em;
+    flex-grow: 1;
+    justify-content: flex-start;
+    align-items: center; /* Vertically align items */
+}
+
+/* NEW: Styles for the input controls */
+.input-control {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #f4f7f9;
+    padding: 8px 12px;
+    border-radius: 5px;
+}
+.input-control label {
+    font-weight: bold;
+    margin: 0;
+    display: inline;
+    white-space: nowrap; /* Prevent label from wrapping */
+}
+.input-control input[type="number"] {
+    width: 70px; /* Fixed width for inputs */
+    padding: 5px;
+    margin: 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* NEW: Make the status div match the input controls */
+#spectrum-info > div:last-child {
+    background-color: #f4f7f9;
+    padding: 8px 12px;
+    border-radius: 5px;
+    display: flex; /* Ensure alignment */
+    align-items: center; /* Ensure alignment */
+}
+
+
+#sim-status {
+    font-weight: bold;
+    padding: 3px 6px;
+    border-radius: 4px;
+    color: white;
+}
+.status-running {
+    background-color: #28a745;
+}
+.status-stopped {
+    background-color: #dc3545;
+}
+
+
+#spectrum-analyzer-container,
+#waterfall-container {
+    width: 100%;
+    background-color: #000000;
+    border-radius: 8px;
+    padding: 10px;
+    box-sizing: border-box; /* Ensures padding doesn't break layout */
+    border: 1px solid #ddd;
+}
+
+#live-spectrum-chart {
+    width: 100%;
+    max-height: 400px;
+    background-color: #0d1117; /* Dark background for the chart */
+    border-radius: 5px;
+}
+
+#waterfall-canvas {
+    width: 100%;
+    height: 400px; /* Fixed height for the waterfall */
+    display: block;
+    image-rendering: pixelated; /* Ensures sharp pixels */
+    border-radius: 5px;
+}
+
+/* MODIFIED: Replaced old satellite image rule with new history styles */
+#satellite-images-container img {
+   display: none; /* Hide old rule */
+}
+
+/* --- NEW: Styles for Image History --- */
+#image-history-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.image-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    overflow: hidden; /* Keeps image corners rounded */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.image-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.image-card img {
+    width: 100%;
+    display: block;
+    height: auto;
+    background-color: #eee; /* Placeholder bg */
+}
+
+.image-card .timestamp {
+    text-align: center;
+    padding: 12px 10px;
+    font-size: 0.9em;
+    color: #333;
+    background-color: #f9f9f9;
+    margin: 0;
+    border-top: 1px solid #eee;
 }

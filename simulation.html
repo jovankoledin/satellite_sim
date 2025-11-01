@@ -8,7 +8,7 @@
     <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
 </head>
 <body>
-    <h1>OFDM Satellite Communication Simulation 🛰️</h1>
+    <h1>OFDM Satellite Communication Simulation </h1>
     <p>This tool simulates sending a text message over a satellite link using OFDM. It models noise, fading, Doppler and lets you choose Forward Error Correction (FEC/Hamming or RS).</p>
 
     <h2>Simulation Parameters</h2>
@@ -70,7 +70,7 @@
     <h2>Simulation Pipeline Visualization</h2>
     <div class="pipeline-container">
         <div class="pipeline-stage">
-            <h3>1. Encoding (Ground Station 📡)</h3>
+            <h3>1. Encoding (Ground Station)</h3>
             <div id="viz-encoding" class="viz-box">
                 </div>
         </div>
@@ -80,11 +80,11 @@
                 </div>
         </div>
         <div class="pipeline-stage">
-            <h3>3. Channel (Space Link 🛰️)</h3>
+            <h3>3. Channel (Space Link)</h3>
             <img id="plot-channel" src="" alt="Channel Response">
         </div>
         <div class="pipeline-stage">
-            <h3>4. Decoding (Receiver 📡)</h3>
+            <h3>4. Decoding (Receiver)</h3>
             <div id="viz-decoding" class="viz-box">
                 </div>
             <img id="plot" src="" alt="Constellation Diagram">
@@ -94,5 +94,8 @@
     <div id="output">Simulation results will appear here...</div>
 
     <script src="app.js"></script>
+
+    <a href="index.html" style="font-weight: bold; color: #007bff;">&larr; Back to Dashboard</a>
+    
 </body>
 </html>

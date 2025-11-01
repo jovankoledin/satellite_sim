@@ -4,25 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Real-Time Satellite Data</title>
-    <link rel="stylesheet" href="style.css"> 
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div style="padding: 20px; max-width: 900px; margin: auto;">
-        <h1>Real-Time Ground Station Data 📡</h1>
-        <p>This page will display live data from the Raspberry Pi ground station.</p>
+        <h1>Real-Time Ground Station Data </h1>
+        <p>This page displays data from the Raspberry Pi ground station, focusing on the <strong>137.5 MHz</strong> band for METEOR-M3</p>
         
-        <h2>METEOR-M 3 Satellite Images</h2>
-        <div id="satellite-images-container">
-            <p>(Placeholder for RTL-SDR decoded images)</p>
+        <h2>Live Spectrum Analyzer</h2>
+        
+        <div id="spectrum-controls">
+            <!-- NEW: Added input for Pi IP Address -->
+            <div class="input-control" style="flex-grow: 1;">
+                <label for="pi-ip-input">Pi IP Address:</label>
+                <input type="text" id="pi-ip-input" value="192.168.1.10" style="width: 120px;">
+            </div>
+            <button id="start-sim-button" class="sim-button active">Start</button>
+            <button id="stop-sim-button" class="sim-button">Stop</button>
+            <div id="spectrum-info">
+                <div class="input-control">
+                    <label for="center-freq-input">Center (MHz):</label>
+                    <input type="number" id="center-freq-input" value="137.5" step="0.1">
+                </div>
+                <div class="input-control">
+                    <label for="span-input">Span (MHz):</label>
+                    <!-- Note: This now maps to Sample Rate. 1.024 is a good default for RTL-SDR -->
+                    <input type="number" id="span-input" value="1.024" step="0.1" min="0.1">
+                </div>
+                <div>Status: <span id="sim-status" class="status-stopped">Stopped</span></div>
+            </div>
         </div>
 
-        <h2>Live Spectrum Analyzer</h2>
         <div id="spectrum-analyzer-container">
-            <p>(Placeholder for live spectrum data)</p>
+            <canvas id="live-spectrum-chart"></canvas>
+        </div>
+
+        <h2>Waterfall Display</h2>
+        <div id="waterfall-container">
+            <canvas id="waterfall-canvas"></canvas>
+        </div>
+
+        <h2>METEOR-M 3 Image History 💾</h2>
+        <p>Decoded images saved on the Raspberry Pi 5.</p>
+        <div id="image-history-container">
+            <div class="image-card">
+                <img src="https://picsum.photos/seed/meteor1/600/800?grayscale" alt="METEOR-M 3 Image 1">
+                <p class="timestamp">Pass @ 2025-11-02 14:32 UTC</p>
+            </div>
+            <div class="image-card">
+                <img src="https://picsum.photos/seed/meteor2/600/800?grayscale" alt="METEOR-M 3 Image 2">
+                <p class="timestamp">Pass @ 2025-11-02 09:15 UTC</p>
+            </div>
+            <div class="image-card">
+                <img src="https://picsum.photos/seed/meteor3/600/800?grayscale" alt="METEOR-M 3 Image 3">
+                <p class="timestamp">Pass @ 2025-11-01 16:04 UTC</p>
+            </div>
+            <div class="image-card">
+                <img src="https://picsum.photos/seed/meteor4/600/800?grayscale" alt="METEOR-M 3 Image 4">
+                <p class="timestamp">Pass @ 2025-10-31 14:28 UTC</p>
+            </div>
         </div>
 
         <br>
         <a href="index.html" style="font-weight: bold; color: #007bff;">&larr; Back to Dashboard</a>
     </div>
+
+    <!-- IMPORTANT: Changed this to the new script -->
+    <script src="real_spectrum.js"></script>
 </body>
 </html>

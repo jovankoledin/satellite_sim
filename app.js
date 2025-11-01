@@ -11,10 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     async function loadPyodideAndPackages() {
         pyodide = await loadPyodide();
-        outputDiv.innerText = "Loading scientific packages (numpy, matplotlib, scipy)... 📦";
+        outputDiv.innerText = "Loading scientific packages (numpy, matplotlib, scipy)...";
         await pyodide.loadPackage(['numpy', 'matplotlib', 'scipy']);
         
-        outputDiv.innerText = "Loading Python simulation library... 📜";
+        outputDiv.innerText = "Loading Python simulation library...";
         try {
             // Fetch the Python code from the external file
             const response = await fetch('./simulation.py');
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const pythonCode = await response.text();
             // Run the Python code once to define all the functions in Pyodide's global scope
             await pyodide.runPythonAsync(pythonCode);
-            outputDiv.innerText = "Ready to run simulation. ✅";
+            outputDiv.innerText = "Ready to run simulation.";
         } catch (error) {
             outputDiv.innerText = `Failed to load simulation.py: ${error.message}`;
             console.error("Failed to fetch/run simulation.py:", error);
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * It's called when the user clicks the "Run Simulation" button.
      */
     async function runSimulation() {
-        outputDiv.innerText = "Running simulation, please wait... ⚙️";
+        outputDiv.innerText = "Running simulation, please wait... ";
         
         // Clear old plots and visualizations
         document.getElementById('plot').src = "";
@@ -48,6 +48,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('viz-encoding').innerHTML = "";
         document.getElementById('viz-ofdm-grid').innerHTML = "";
         document.getElementById('viz-decoding').innerHTML = "";
+
+        // --- NEW: Hide plots at the start of every run ---
+        document.getElementById('plot').style.display = 'none'; 
+        document.getElementById('plot-channel').style.display = 'none';
 
         try {
             // Ensure Pyodide and the Python script are fully loaded
@@ -156,7 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // --- VIZ 3: CHANNEL PLOT ---
-            document.getElementById('plot-channel').src = `data:image/png;base64,${plotChBase64}`;
+            const plotChannel = document.getElementById('plot-channel');
+            plotChannel.src = `data:image/png;base64,${plotChBase64}`;
+            plotChannel.style.display = 'block'; // --- NEW: Make plot visible ---
 
             // --- VIZ 4: DECODING (FEC) ---
             const decodingViz = document.getElementById('viz-decoding');
@@ -177,6 +183,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
             decodingViz.innerHTML = statusHtml;
+
+            // --- VIZ 4: CONST. PLOT ---
+            const plotConstellation = document.getElementById('plot');
+            plotConstellation.src = `data:image/png;base64,${plotBase64}`;
+            plotConstellation.style.display = 'block'; 
 
         } catch (error) {
             outputDiv.innerText = `An error occurred during the Python execution:\n${error.message}`;
