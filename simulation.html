@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>OFDM Satellite Simulation</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js"></script>
+</head>
+<body>
+    <h1>OFDM Satellite Communication Simulation 🛰️</h1>
+    <p>This tool simulates sending a text message over a satellite link using OFDM. It models noise, fading, Doppler and lets you choose Forward Error Correction (FEC/Hamming or RS).</p>
+
+    <h2>Simulation Parameters</h2>
+    <div class="input-group">
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="message"><span class="tooltip-label" data-tooltip="The text message to be transmitted over the satellite link.">Message:</span></label>
+            <input type="text" id="message" value="Hello from Earth!">
+        </div>
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="snr"><span class="tooltip-label" data-tooltip="Signal-to-Noise Ratio (dB): A measure of signal strength relative to background noise. Higher is better.">SNR (dB):</span></label>
+            <input type="number" id="snr" value="25" step="1">
+        </div>
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="k_db"><span class="tooltip-label" data-tooltip="Rician K-factor (dB): Ratio of the direct-path signal to the scattered, faded paths. Higher K means a clearer, less faded signal.">Rician K-factor (K<sub>dB</sub>):</span></label>
+            <input type="number" id="k_db" value="20" step="1" min="0">
+        </div>
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="doppler_norm"><span class="tooltip-label" data-tooltip="Normalized Doppler Shift (fd / Fs): The frequency shift caused by satellite/receiver motion, relative to the signal bandwidth. Causes inter-carrier interference.">Normalized Doppler (f<sub>d</sub> / F<sub>s</sub>):</span></label>
+            <input type="number" id="doppler_norm" value="0.000" step="0.0001" min="0">
+        </div>
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="k_subcarriers"><span class="tooltip-label" data-tooltip="Number of Subcarriers (K): The total number of parallel data streams the OFDM signal is split into. More carriers can better handle frequency-selective fading.">Number of Subcarriers (K):</span></label>
+            <input type="number" id="k_subcarriers" value="64" step="16" min="16">
+        </div>
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="fec_type"><span class="tooltip-label" data-tooltip="Forward Error Correction: A scheme to add redundant data (parity bits/bytes) that allows the receiver to detect and correct transmission errors.">FEC Scheme:</span></label>
+            <select id="fec_type">
+                <option value="hamming">Hamming (7,4)</option>
+                <option value="reed_solomon">Reed-Solomon (255,223)</option>
+            </select>
+        </div>
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="mod_scheme"><span class="tooltip-label" data-tooltip="Modulation Scheme: Defines how many bits of data are encoded into a single radio symbol. Higher-order schemes (e.g., 64-QAM) are faster but require a higher SNR.">Modulation Scheme:</span></label>
+            <select id="mod_scheme">
+                <option value="QPSK">QPSK (2 bits/sym)</option>
+                <option value="BPSK">BPSK (1 bit/sym)</option>
+                <option value="16QAM">16-QAM (4 bits/sym)</option>
+                <option value="64QAM">64-QAM (6 bits/sym)</option>
+            </select>
+        </div>
+        <div>
+            <!-- Added span with tooltip -->
+            <label for="symbol_rate"><span class="tooltip-label" data-tooltip="Symbol Rate (MSym/s): The number of symbols (e.g., one QPSK point) transmitted per second, in millions. Total bandwidth is roughly Symbol Rate * K Subcarriers.">Symbol Rate (MSym/s):</span></label>
+            <input type="number" id="symbol_rate" value="1.0" step="0.1" min="0.1">
+        </div>
+        </div>
+
+    <button id="run-sim-button">Run Simulation</button>
+    
+    <div id="data-rate-output">Effective Data Rate: -</div>
+
+    <h2>Simulation Pipeline Visualization</h2>
+    <div class="pipeline-container">
+        <div class="pipeline-stage">
+            <h3>1. Encoding (Ground Station 📡)</h3>
+            <div id="viz-encoding" class="viz-box">
+                </div>
+        </div>
+        <div class="pipeline-stage">
+            <h3>2. Transmission (OFDM Grid)</h3>
+            <div id="viz-ofdm-grid" class="viz-box">
+                </div>
+        </div>
+        <div class="pipeline-stage">
+            <h3>3. Channel (Space Link 🛰️)</h3>
+            <img id="plot-channel" src="" alt="Channel Response">
+        </div>
+        <div class="pipeline-stage">
+            <h3>4. Decoding (Receiver 📡)</h3>
+            <div id="viz-decoding" class="viz-box">
+                </div>
+            <img id="plot" src="" alt="Constellation Diagram">
+        </div>
+    </div>
+
+    <div id="output">Simulation results will appear here...</div>
+
+    <script src="app.js"></script>
+</body>
+</html>
