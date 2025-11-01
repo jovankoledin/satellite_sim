@@ -85,3 +85,58 @@ button:hover { background-color: #0056b3; }
 }
 .cell-data { background-color: #007bff; }
 .cell-pilot { background-color: #dc3545; }
+
+/* --- Added Tooltip Styles --- */
+.tooltip-label {
+    cursor: help;
+    position: relative;
+    text-decoration: underline;
+    text-decoration-style: dotted;
+}
+
+/* The tooltip box */
+.tooltip-label::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%; /* Position above the label */
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 8px 12px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    font-weight: normal; /* Reset bold from label */
+    white-space: normal;
+    width: 250px; /* Set a reasonable width */
+    text-align: left;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* The tooltip arrow */
+.tooltip-label::before {
+    content: '';
+    position: absolute;
+    bottom: 125%;
+    margin-bottom: -5px; /* Sits just below the box */
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 11;
+}
+
+/* Show on hover */
+.tooltip-label:hover::after,
+.tooltip-label:hover::before {
+    visibility: visible;
+    opacity: 1;
+}
